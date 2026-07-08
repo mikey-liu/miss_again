@@ -1,0 +1,84 @@
+{
+  "figmaFileKey": "pBZ2DC72i0RGz5h1rIChwK",
+  "figmaFileUrl": "https://www.figma.com/design/pBZ2DC72i0RGz5h1rIChwK",
+  "status": {
+    "skeletonCreated": true,
+    "uploaded": [
+      "loading-menu-screens-board.png",
+      "gameplay-hud-result-screens-board.png"
+    ],
+    "blockedBy": "Figma Starter MCP tool call limit"
+  },
+  "pages": [
+    "00 封面与说明",
+    "01 流程与地图",
+    "02 组件与精灵"
+  ],
+  "placeholders": [
+    {
+      "file": "loading-menu-screens-board.png",
+      "nodeId": "3:61",
+      "page": "01 流程与地图"
+    },
+    {
+      "file": "gameplay-hud-result-screens-board.png",
+      "nodeId": "3:65",
+      "page": "01 流程与地图"
+    },
+    {
+      "file": "ux-feedback-board.png",
+      "nodeId": "3:69",
+      "page": "01 流程与地图"
+    },
+    {
+      "file": "theme-map-board.png",
+      "nodeId": "3:73",
+      "page": "01 流程与地图"
+    },
+    {
+      "file": "overworld-map-background.png",
+      "nodeId": "3:77",
+      "page": "01 流程与地图"
+    },
+    {
+      "file": "gameplay-backgrounds-board.png",
+      "nodeId": "3:81",
+      "page": "01 流程与地图"
+    },
+    {
+      "file": "level-map-components-board.png",
+      "nodeId": "3:85",
+      "page": "01 流程与地图"
+    },
+    {
+      "file": "ui-kit-board.png",
+      "nodeId": "3:89",
+      "page": "02 组件与精灵"
+    },
+    {
+      "file": "ui-components-slice-board.png",
+      "nodeId": "3:93",
+      "page": "02 组件与精灵"
+    },
+    {
+      "file": "icons-controls-slice-board.png",
+      "nodeId": "3:97",
+      "page": "02 组件与精灵"
+    },
+    {
+      "file": "icons-rewards-board.png",
+      "nodeId": "3:101",
+      "page": "02 组件与精灵"
+    },
+    {
+      "file": "targets-effects-sprites-board.png",
+      "nodeId": "3:105",
+      "page": "02 组件与精灵"
+    },
+    {
+      "file": "targets-effects-slice-board.png",
+      "nodeId": "3:109",
+      "page": "02 组件与精灵"
+    }
+  ]
+}

@@ -1,0 +1,380 @@
+{
+  "screens": {
+    "loading": {
+      "file": "screens/loading.png",
+      "source": "loading-menu-screens-board.png",
+      "box": [
+        18,
+        24,
+        435,
+        852
+      ],
+      "width": 383,
+      "height": 760
+    },
+    "menu": {
+      "file": "screens/menu.png",
+      "source": "loading-menu-screens-board.png",
+      "box": [
+        462,
+        24,
+        878,
+        852
+      ],
+      "width": 382,
+      "height": 760
+    },
+    "gameplay_level1": {
+      "file": "screens/gameplay_level1.png",
+      "source": "gameplay-hud-result-screens-board.png",
+      "box": [
+        28,
+        38,
+        457,
+        824
+      ],
+      "width": 415,
+      "height": 760
+    },
+    "gameplay_level2": {
+      "file": "screens/gameplay_level2.png",
+      "source": "gameplay-hud-result-screens-board.png",
+      "box": [
+        486,
+        38,
+        915,
+        824
+      ],
+      "width": 415,
+      "height": 760
+    },
+    "pause": {
+      "file": "screens/pause.png",
+      "source": "gameplay-hud-result-screens-board.png",
+      "box": [
+        944,
+        38,
+        1373,
+        824
+      ],
+      "width": 415,
+      "height": 760
+    },
+    "result": {
+      "file": "screens/result.png",
+      "source": "gameplay-hud-result-screens-board.png",
+      "box": [
+        1402,
+        38,
+        1820,
+        824
+      ],
+      "width": 404,
+      "height": 760
+    },
+    "level_map": {
+      "file": "screens/level_map.png",
+      "source": "overworld-map-background.png",
+      "box": [
+        0,
+        0,
+        941,
+        1672
+      ],
+      "width": 675,
+      "height": 1200
+    }
+  },
+  "sprites": {
+    "pumpkin": {
+      "file": "sprites/pumpkin.png",
+      "source": "targets-effects-slice-board.png",
+      "box": [
+        22,
+        32,
+        195,
+        190
+      ],
+      "width": 148,
+      "height": 125
+    },
+    "tomato": {
+      "file": "sprites/tomato.png",
+      "source": "targets-effects-slice-board.png",
+      "box": [
+        228,
+        42,
+        405,
+        190
+      ],
+      "width": 138,
+      "height": 118
+    },
+    "eggplant": {
+      "file": "sprites/eggplant.png",
+      "source": "targets-effects-slice-board.png",
+      "box": [
+        438,
+        22,
+        615,
+        195
+      ],
+      "width": 131,
+      "height": 159
+    },
+    "cabbage": {
+      "file": "sprites/cabbage.png",
+      "source": "targets-effects-slice-board.png",
+      "box": [
+        630,
+        28,
+        835,
+        198
+      ],
+      "width": 172,
+      "height": 122
+    },
+    "corn": {
+      "file": "sprites/corn.png",
+      "source": "targets-effects-slice-board.png",
+      "box": [
+        850,
+        24,
+        1030,
+        198
+      ],
+      "width": 156,
+      "height": 151
+    },
+    "carrot": {
+      "file": "sprites/carrot.png",
+      "source": "targets-effects-slice-board.png",
+      "box": [
+        1060,
+        25,
+        1195,
+        198
+      ],
+      "width": 107,
+      "height": 157
+    },
+    "mushroom": {
+      "file": "sprites/mushroom.png",
+      "source": "targets-effects-slice-board.png",
+      "box": [
+        28,
+        238,
+        200,
+        412
+      ],
+      "width": 146,
+      "height": 144
+    },
+    "strawberry": {
+      "file": "sprites/strawberry.png",
+      "source": "targets-effects-slice-board.png",
+      "box": [
+        228,
+        232,
+        410,
+        424
+      ],
+      "width": 140,
+      "height": 192
+    },
+    "radish": {
+      "file": "sprites/radish.png",
+      "source": "targets-effects-slice-board.png",
+      "box": [
+        440,
+        245,
+        610,
+        425
+      ],
+      "width": 138,
+      "height": 167
+    },
+    "watermelon": {
+      "file": "sprites/watermelon.png",
+      "source": "targets-effects-slice-board.png",
+      "box": [
+        638,
+        238,
+        838,
+        428
+      ],
+      "width": 168,
+      "height": 161
+    },
+    "apple": {
+      "file": "sprites/apple.png",
+      "source": "targets-effects-slice-board.png",
+      "box": [
+        850,
+        244,
+        1030,
+        420
+      ],
+      "width": 165,
+      "height": 146
+    },
+    "grapes": {
+      "file": "sprites/grapes.png",
+      "source": "targets-effects-slice-board.png",
+      "box": [
+        1038,
+        242,
+        1220,
+        425
+      ],
+      "width": 161,
+      "height": 164
+    },
+    "ring_rest": {
+      "file": "sprites/ring_rest.png",
+      "source": "targets-effects-slice-board.png",
+      "box": [
+        28,
+        480,
+        210,
+        590
+      ],
+      "width": 146,
+      "height": 60
+    },
+    "ring_tilt": {
+      "file": "sprites/ring_tilt.png",
+      "source": "targets-effects-slice-board.png",
+      "box": [
+        240,
+        448,
+        430,
+        590
+      ],
+      "width": 190,
+      "height": 142
+    },
+    "ring_hit": {
+      "file": "sprites/ring_hit.png",
+      "source": "targets-effects-slice-board.png",
+      "box": [
+        606,
+        435,
+        890,
+        610
+      ],
+      "width": 227,
+      "height": 175
+    },
+    "ring_bounce": {
+      "file": "sprites/ring_bounce.png",
+      "source": "targets-effects-slice-board.png",
+      "box": [
+        918,
+        440,
+        1165,
+        610
+      ],
+      "width": 247,
+      "height": 170
+    }
+  },
+  "ui": {
+    "panel_wide": {
+      "file": "ui/panel_wide.png",
+      "source": "ui-components-slice-board.png",
+      "box": [
+        638,
+        104,
+        1145,
+        224
+      ],
+      "width": 507,
+      "height": 120
+    },
+    "button_yellow": {
+      "file": "ui/button_yellow.png",
+      "source": "ui-components-slice-board.png",
+      "box": [
+        60,
+        284,
+        276,
+        360
+      ],
+      "width": 216,
+      "height": 76
+    },
+    "button_green": {
+      "file": "ui/button_green.png",
+      "source": "ui-components-slice-board.png",
+      "box": [
+        60,
+        388,
+        276,
+        462
+      ],
+      "width": 216,
+      "height": 74
+    },
+    "button_red": {
+      "file": "ui/button_red.png",
+      "source": "ui-components-slice-board.png",
+      "box": [
+        60,
+        492,
+        276,
+        566
+      ],
+      "width": 216,
+      "height": 74
+    },
+    "hud_ring": {
+      "file": "ui/hud_ring.png",
+      "source": "ui-components-slice-board.png",
+      "box": [
+        58,
+        708,
+        420,
+        766
+      ],
+      "width": 362,
+      "height": 58
+    },
+    "hud_score": {
+      "file": "ui/hud_score.png",
+      "source": "ui-components-slice-board.png",
+      "box": [
+        58,
+        806,
+        420,
+        864
+      ],
+      "width": 362,
+      "height": 58
+    },
+    "speech": {
+      "file": "ui/speech.png",
+      "source": "ui-components-slice-board.png",
+      "box": [
+        60,
+        1046,
+        410,
+        1135
+      ],
+      "width": 348,
+      "height": 89
+    },
+    "result_panel": {
+      "file": "ui/result_panel.png",
+      "source": "ui-components-slice-board.png",
+      "box": [
+        446,
+        632,
+        815,
+        958
+      ],
+      "width": 369,
+      "height": 326
+    }
+  }
+}

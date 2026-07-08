@@ -94,6 +94,7 @@ function runHitDetection() {
 
   assert.strictEqual(state.ringGame.status, 'hit');
   assert.strictEqual(state.ringGame.score, target.score);
+  assert.strictEqual(state.ringGame.hits, 1);
   assert.strictEqual(state.ringGame.targets[0].hit, true);
   assert(state.ringGame.effects.length > 0, 'hit should create effects');
 }
@@ -116,6 +117,7 @@ function runVegetableBounceIsStrongerThanGround() {
 
   const afterVegetable = core.step(vegetableState, 1 / 60);
   assert(afterVegetable.ringGame.ring.vy < -250, 'vegetable collision should bounce strongly');
+  assert(afterVegetable.ringGame.effects.length > 0, 'vegetable collision should create feedback particles');
 
   const groundY = core.getGroundY(state.height);
   const groundState = Object.assign({}, state, {
@@ -133,6 +135,28 @@ function runVegetableBounceIsStrongerThanGround() {
 
   const afterGround = core.step(groundState, 1 / 60);
   assert(Math.abs(afterGround.ringGame.ring.vy) < Math.abs(afterVegetable.ringGame.ring.vy));
+  assert(afterGround.ringGame.effects.length > 0, 'ground collision should create dust particles');
+}
+
+function runResizeKeepsHitTargets() {
+  let state = enterLevel(1);
+  state = Object.assign({}, state, {
+    ringGame: Object.assign({}, state.ringGame, {
+      targets: state.ringGame.targets.map((target, index) => (
+        index === 0 ? Object.assign({}, target, { hit: true }) : target
+      ))
+    })
+  });
+
+  state = core.resizeState(state, 414, 736);
+  assert.strictEqual(state.ringGame.targets[0].hit, true);
+}
+
+function runRatingTextKeys() {
+  assert.strictEqual(core.getRating(0), 'rating0');
+  assert.strictEqual(core.getRating(2), 'rating1');
+  assert.strictEqual(core.getRating(5), 'rating2');
+  assert.strictEqual(core.getRating(6), 'rating3');
 }
 
 function runFiveRingsFinish() {
@@ -161,5 +185,7 @@ runShortSwipeDoesNotConsume();
 runHitDetection();
 runVegetableBounceIsStrongerThanGround();
 runFiveRingsFinish();
+runResizeKeepsHitTargets();
+runRatingTextKeys();
 
 console.log('core tests passed');

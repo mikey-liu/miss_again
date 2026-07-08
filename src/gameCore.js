@@ -35,7 +35,7 @@ const LEVELS = [
     showDistance: false,
     targetScale: 0.72,
     targets: [
-      { id: 'pepper', type: 'pepper', x: 0.24, y: 0.5, radius: 23, score: 2 },
+      { id: 'strawberry', type: 'strawberry', x: 0.24, y: 0.5, radius: 23, score: 2 },
       { id: 'corn', type: 'corn', x: 0.5, y: 0.56, radius: 24, score: 2 },
       { id: 'radish', type: 'radish', x: 0.75, y: 0.62, radius: 22, score: 2 },
       { id: 'mushroom', type: 'mushroom', x: 0.39, y: 0.7, radius: 21, score: 2 }
@@ -104,6 +104,7 @@ function createRingGame(levelId, width, height) {
     levelId: level.id,
     ringsTotal: 5,
     ringsLeft: 5,
+    hits: 0,
     score: 0,
     status: 'ready',
     messageKey: 'swipeToThrow',
@@ -140,8 +141,14 @@ function resizeState(state, width, height) {
 
   if (state.ringGame) {
     const level = getLevel(state.ringGame.levelId);
+    const hitById = state.ringGame.targets.reduce((result, target) => {
+      result[target.id] = target.hit;
+      return result;
+    }, {});
     const resizedGame = Object.assign({}, state.ringGame, {
-      targets: buildTargets(level, next.width, next.height)
+      targets: buildTargets(level, next.width, next.height).map((target) => (
+        Object.assign({}, target, { hit: Boolean(hitById[target.id]) })
+      ))
     });
 
     if (!state.ringGame.ring.flying && state.ringGame.status !== 'aiming') {
@@ -341,7 +348,7 @@ function step(state, dt) {
 }
 
 function stepRingGame(game, width, height, dt) {
-  const effects = game.effects
+  let effects = game.effects
     .map((effect) => Object.assign({}, effect, { age: effect.age + dt }))
     .filter((effect) => effect.age < effect.life);
 
@@ -377,6 +384,7 @@ function stepRingGame(game, width, height, dt) {
 
       return Object.assign({}, game, {
         score: game.score + collision.score,
+        hits: game.hits + 1,
         status: 'hit',
         messageKey: 'hit',
         targets,
@@ -396,14 +404,19 @@ function stepRingGame(game, width, height, dt) {
     ring.vx += (ring.x - collision.x) * 4.6;
     ring.y = Math.min(ring.y, collision.y - collision.radius - ring.radius * 0.35);
     ring.collisionCooldown = 0.15;
+    effects = effects.concat(createBounceEffects(ring.x, ring.y, 'vegetable'));
   }
 
   const groundY = getGroundY(height);
   if (ring.y > groundY) {
+    const impactSpeed = Math.abs(ring.vy);
     ring.y = groundY;
     ring.vy = -Math.abs(ring.vy) * (ring.groundBounces === 0 ? WORLD.firstGroundBounce : WORLD.groundBounce);
     ring.vx *= 0.72;
     ring.groundBounces += 1;
+    if (impactSpeed > WORLD.settleSpeed) {
+      effects = effects.concat(createBounceEffects(ring.x, ring.y, 'ground'));
+    }
   }
 
   const speed = Math.hypot(ring.vx, ring.vy);
@@ -461,11 +474,51 @@ function createHitEffects(x, y) {
       vy: Math.sin(angle) * (34 + (i % 2) * 14),
       age: 0,
       life: 0.55,
-      colorIndex: i % 4
+      colorIndex: i % 4,
+      kind: 'hit'
     });
   }
 
   return effects;
+}
+
+function createBounceEffects(x, y, surface) {
+  const effects = [];
+  const count = surface === 'vegetable' ? 8 : 5;
+  const base = surface === 'vegetable' ? 48 : 24;
+  const colorOffset = surface === 'vegetable' ? 2 : 3;
+
+  for (let i = 0; i < count; i += 1) {
+    const side = i % 2 === 0 ? -1 : 1;
+    effects.push({
+      x,
+      y,
+      vx: side * (base + i * 5),
+      vy: -(base * 0.65 + (i % 3) * 12),
+      age: 0,
+      life: surface === 'vegetable' ? 0.36 : 0.24,
+      colorIndex: (i + colorOffset) % 4,
+      kind: `${surface}Bounce`
+    });
+  }
+
+  return effects;
+}
+
+function getRating(score) {
+  if (score <= 0) {
+    return 'rating0';
+  }
+
+  if (score <= 2) {
+    return 'rating1';
+  }
+
+  if (score <= 5) {
+    return 'rating2';
+  }
+
+  return 'rating3';
 }
 
 module.exports = {
@@ -480,6 +533,7 @@ module.exports = {
   createRingGame,
   getGroundY,
   getLevel,
+  getRating,
   goToMenu,
   releaseAim,
   resizeState,
