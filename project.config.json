@@ -19,10 +19,6 @@
     "ignore": [
       {
         "type": "folder",
-        "value": "assets/concepts"
-      },
-      {
-        "type": "folder",
         "value": "docs"
       },
       {
