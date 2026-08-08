@@ -412,7 +412,8 @@ try {
 function addToLeaderboard(scoreVal, charIdx) {
   const now = new Date();
   const dateStr = `${now.getMonth() + 1}/${now.getDate()} ${now.getHours()}:${String(now.getMinutes()).padStart(2, '0')}`;
-  leaderboard.unshift({ score: scoreVal, char: charIdx, date: dateStr });
+  leaderboard.push({ score: scoreVal, char: charIdx, date: dateStr });
+  leaderboard.sort((a, b) => b.score - a.score);
   if (leaderboard.length > 10) leaderboard = leaderboard.slice(0, 10);
   try { wx.setStorageSync('alienJumpScores', leaderboard); } catch (e) {}
 }
@@ -1648,7 +1649,7 @@ function drawLeaderboardScreen() {
   ctx.font = 'bold 28px sans-serif'; ctx.textAlign = 'center';
   ctx.fillText('排行榜', W / 2, cardY + 45);
   ctx.font = '13px sans-serif'; ctx.fillStyle = '#999';
-  ctx.fillText('最近 10 条记录', W / 2, cardY + 68);
+  ctx.fillText('最高 10 条记录', W / 2, cardY + 68);
 
   if (leaderboard.length === 0) {
     ctx.fillStyle = '#999'; ctx.font = '16px sans-serif';
