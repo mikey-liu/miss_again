@@ -228,27 +228,146 @@ function sfxClick() {
   playBeep(800, 0.03, 'square', 0.04);
 }
 
+// ─── Character Switch Sound (with stop + per-character theme) ───
+let charSwitchTimers = [];
+let charSwitchGain = null;
+
+function stopCharSwitchSound() {
+  for (const t of charSwitchTimers) clearTimeout(t);
+  charSwitchTimers = [];
+  if (charSwitchGain) {
+    try { charSwitchGain.disconnect(); } catch (e) {}
+    charSwitchGain = null;
+  }
+}
+
+function playSwitchBeep(freq, duration, type, vol) {
+  if (!audioCtx || !charSwitchGain) return;
+  try {
+    const t = audioCtx.currentTime;
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    osc.type = type || 'square';
+    osc.frequency.setValueAtTime(freq, t);
+    gain.gain.setValueAtTime(vol || 0.08, t);
+    gain.gain.exponentialRampToValueAtTime(0.001, t + duration);
+    osc.connect(gain);
+    gain.connect(charSwitchGain);
+    osc.start(t);
+    osc.stop(t + duration);
+  } catch (e) {}
+}
+
 function sfxCharacterSwitch() {
   if (!audioCtx) return;
+  stopCharSwitchSound();
+
+  charSwitchGain = audioCtx.createGain();
+  charSwitchGain.gain.value = 1.0;
+  charSwitchGain.connect(audioCtx.destination);
+
   const c = CHARACTERS[selectedCharacter];
-  const wave = c.sfxWave;
-  // Phase 1: Rising arpeggio (0 ~ 1.2s)
-  const arp = [262, 330, 392, 523, 659, 784, 988, 1047];
-  for (let i = 0; i < arp.length; i++) {
-    setTimeout(() => playBeep(arp[i], 0.18, wave, 0.07), i * 150);
-  }
-  // Phase 2: Sustained descent (1.2s ~ 2.5s)
-  setTimeout(() => {
-    playBeep(1047, 0.6, wave, 0.06);
-    setTimeout(() => playBeep(784, 0.5, wave, 0.05), 200);
-    setTimeout(() => playBeep(523, 0.6, wave, 0.04), 450);
-  }, 1200);
-  // Phase 3: Sparkle finish (2.5s ~ 3.0s)
-  setTimeout(() => {
-    for (let i = 0; i < 5; i++) {
-      setTimeout(() => playBeep(1200 + i * 150, 0.1, 'sine', 0.05), i * 80);
+  const sched = (fn, delay) => { charSwitchTimers.push(setTimeout(fn, delay)); };
+
+  if (c.name === 'Zorg') {
+    // === 可爱卖萌：咯咯笑 + 弹跳旋律 ===
+    const notes = [880, 988, 880, 1047, 988, 1175, 1047, 1320, 1175, 1320];
+    for (let i = 0; i < notes.length; i++) {
+      const n = notes[i];
+      sched(() => {
+        playSwitchBeep(n, 0.14, 'sine', 0.08);
+        playSwitchBeep(n * 1.5, 0.04, 'sine', 0.03);
+      }, i * 150);
     }
-  }, 2500);
+    // 开心颤音
+    sched(() => {
+      for (let i = 0; i < 8; i++) {
+        charSwitchTimers.push(setTimeout(() => playSwitchBeep(1320 + i * 80, 0.06, 'sine', 0.05), i * 50));
+      }
+    }, notes.length * 150);
+    // "Whee!" 收尾
+    sched(() => playSwitchBeep(1568, 0.15, 'sine', 0.07), 1900);
+    sched(() => playSwitchBeep(1760, 0.15, 'sine', 0.06), 2050);
+    sched(() => playSwitchBeep(1568, 0.3, 'sine', 0.05), 2200);
+    sched(() => playSwitchBeep(2093, 0.25, 'sine', 0.04), 2500);
+
+  } else if (c.name === 'Bloop') {
+    // === 水下泡泡：流水 + 气泡冒泡 ===
+    const flow = [196, 247, 294, 349, 392, 440, 494];
+    for (let i = 0; i < flow.length; i++) {
+      sched(() => playSwitchBeep(flow[i], 0.35, 'sine', 0.05), i * 200);
+    }
+    // 随机气泡 pops
+    for (let i = 0; i < 15; i++) {
+      sched(() => playSwitchBeep(1200 + Math.random() * 1800, 0.04, 'sine', 0.04), Math.random() * 2400);
+    }
+    // 上冒气泡流
+    sched(() => {
+      for (let i = 0; i < 10; i++) {
+        charSwitchTimers.push(setTimeout(() => playSwitchBeep(600 + i * 120, 0.06, 'sine', 0.04), i * 60));
+      }
+    }, 1500);
+    // 水波下降收尾
+    sched(() => playSwitchBeep(880, 0.15, 'sine', 0.05), 2200);
+    sched(() => playSwitchBeep(659, 0.15, 'sine', 0.04), 2350);
+    sched(() => playSwitchBeep(440, 0.35, 'sine', 0.04), 2500);
+
+  } else if (c.name === 'Zix') {
+    // === 神秘宇宙：低频 drone + 星光闪烁 ===
+    sched(() => playSwitchBeep(110, 3.0, 'triangle', 0.04), 0);
+    sched(() => playSwitchBeep(165, 3.0, 'triangle', 0.025), 0);
+    // 神秘小调旋律
+    const melody = [220, 262, 294, 330, 294, 262, 220, 196];
+    for (let i = 0; i < melody.length; i++) {
+      sched(() => playSwitchBeep(melody[i], 0.22, 'triangle', 0.05), 200 + i * 180);
+    }
+    // 星光闪烁
+    for (let i = 0; i < 12; i++) {
+      sched(() => playSwitchBeep(2000 + Math.random() * 2000, 0.05, 'sine', 0.03), Math.random() * 2800);
+    }
+    // 宇宙微光收尾
+    sched(() => {
+      for (let i = 0; i < 6; i++) {
+        charSwitchTimers.push(setTimeout(() => playSwitchBeep(1600 + i * 150, 0.12, 'sine', 0.04), i * 60));
+      }
+    }, 1800);
+    // 深沉收束
+    sched(() => playSwitchBeep(110, 0.5, 'triangle', 0.05), 2500);
+
+  } else if (c.name === 'Blaze') {
+    // === 火焰愤怒：低吼蓄力 → 爆发 ===
+    sched(() => playSwitchBeep(55, 1.5, 'sawtooth', 0.06), 0);
+    sched(() => playSwitchBeep(73, 1.5, 'sawtooth', 0.04), 0);
+    // 火焰噼啪
+    for (let i = 0; i < 12; i++) {
+      sched(() => playSwitchBeep(400 + Math.random() * 800, 0.04, 'sawtooth', 0.04), i * 100);
+    }
+    // 愤怒递增低吼
+    const growls = [80, 100, 130, 160, 200, 250, 320, 400, 480, 560];
+    for (let i = 0; i < growls.length; i++) {
+      const g = growls[i];
+      sched(() => {
+        playSwitchBeep(g, 0.12, 'sawtooth', 0.05);
+        playSwitchBeep(g * 1.5, 0.08, 'square', 0.03);
+      }, 200 + i * 120);
+    }
+    // 爆发！
+    const expTime = 200 + growls.length * 120;
+    sched(() => {
+      playSwitchBeep(50, 0.8, 'sawtooth', 0.09);
+      playSwitchBeep(75, 0.6, 'square', 0.05);
+    }, expTime);
+    // 余烬噼啪
+    sched(() => {
+      for (let i = 0; i < 8; i++) {
+        charSwitchTimers.push(setTimeout(() => playSwitchBeep(500 + Math.random() * 1000, 0.05, 'sawtooth', 0.04), i * 70));
+      }
+    }, expTime);
+    // 怒吼渐弱收尾
+    sched(() => playSwitchBeep(80, 0.3, 'sawtooth', 0.05), expTime + 600);
+    sched(() => playSwitchBeep(60, 0.4, 'sawtooth', 0.04), expTime + 800);
+    sched(() => playSwitchBeep(45, 0.5, 'sawtooth', 0.03), expTime + 1100);
+  }
 }
 
 // ─── Game Constants ──────────────────────────────────
