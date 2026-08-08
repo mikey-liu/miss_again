@@ -17,22 +17,8 @@
   "simulatorPluginLibVersion": {},
   "packOptions": {
     "ignore": [
-      {
-        "type": "folder",
-        "value": "docs"
-      },
-      {
-        "type": "folder",
-        "value": "scripts"
-      },
-      {
-        "type": "folder",
-        "value": "tests"
-      },
-      {
-        "type": "folder",
-        "value": ".agents"
-      }
+      { "type": "folder", "value": "assets" },
+      { "type": "folder", "value": ".workbuddy" }
     ],
     "include": []
   },
