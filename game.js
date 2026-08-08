@@ -760,12 +760,16 @@ function drawButton(x, y, w, h, label, bgColor, textColor) {
 function getMenuButtonRects() {
   const btnW = 200;
   const btnX = W / 2 - btnW / 2;
-  return {
-    start: { x: btnX, y: H * 0.40, w: btnW, h: 48 },
-    leaderboard: { x: btnX, y: H * 0.50, w: btnW, h: 44 },
-    credits: { x: btnX, y: H * 0.58, w: btnW, h: 44 },
-    share: { x: btnX, y: H * 0.66, w: btnW, h: 44 },
-  };
+  const gap = 14;
+  let y = H * 0.40;
+  const start = { x: btnX, y, w: btnW, h: 48 };
+  y += 48 + gap;
+  const leaderboard = { x: btnX, y, w: btnW, h: 44 };
+  y += 44 + gap;
+  const credits = { x: btnX, y, w: btnW, h: 44 };
+  y += 44 + gap;
+  const share = { x: btnX, y, w: btnW, h: 44 };
+  return { start, leaderboard, credits, share };
 }
 
 function getPauseButtonRects() {
@@ -794,7 +798,7 @@ function getSubScreenBackRect() {
 
 // Pause button position (in-game)
 const PAUSE_BTN_X = W - 32;
-const PAUSE_BTN_Y = 60;
+const PAUSE_BTN_Y = 90;
 const PAUSE_BTN_R = 18;
 
 // ─── Input Handling ──────────────────────────────────
