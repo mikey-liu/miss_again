@@ -450,6 +450,10 @@ let particles = [];
 let shakeAmount = 0;
 const shakeDecay = 0.85;
 
+// Rocket easter egg: bounce on 10 different green platforms
+let greenBounceHistory = [];
+let rocketEgg = null; // { x, y, timer, vy, born }
+
 // Input state
 let inputLeft = false;
 let inputRight = false;
@@ -590,6 +594,8 @@ const PLATFORM_TYPES = {
   SPRING: 'spring',
 };
 
+let platformIdCounter = 0;
+
 function createPlatform(y, type) {
   const margin = 30;
   const x = margin + Math.random() * (W - PLATFORM_WIDTH - margin * 2);
@@ -603,6 +609,7 @@ function createPlatform(y, type) {
   }
 
   return {
+    id: ++platformIdCounter,
     x, y,
     w: PLATFORM_WIDTH,
     h: PLATFORM_HEIGHT,
@@ -645,6 +652,7 @@ function generateInitialPlatforms() {
   easterEggParticles = [];
 
   const basePlatform = {
+    id: ++platformIdCounter,
     x: W / 2 - PLATFORM_WIDTH / 2,
     y: H - 80,
     w: PLATFORM_WIDTH,
@@ -686,6 +694,8 @@ function generateInitialPlatforms() {
   player.vy = 0;
   player.dir = 1;
   shakeAmount = 0;
+  greenBounceHistory = [];
+  rocketEgg = null;
 }
 
 function ensurePlatformsAbove() {
@@ -938,6 +948,20 @@ wx.onTouchStart((e) => {
         return;
       }
 
+      // Rocket easter egg check
+      if (rocketEgg) {
+        const rScreenY = rocketEgg.y - cameraY;
+        if (Math.hypot(tx - (rocketEgg.x + JETPACK_W / 2), ty - (rScreenY + JETPACK_H / 2)) < 40) {
+          sfxJetpack();
+          spawnParticles(rocketEgg.x + JETPACK_W / 2, rocketEgg.y + JETPACK_H / 2, 25, '#facc15');
+          player.jetpackActive = true;
+          player.jetpackTimer = 5;
+          player.jetpackFuel = 100;
+          rocketEgg = null;
+          return;
+        }
+      }
+
       // Movement
       const third = W / 3;
       if (tx < third) inputLeft = true;
@@ -986,7 +1010,7 @@ function startAccelerometer() {
 wx.onAccelerometerChange((res) => {
   const val = res.x || 0;
   rawTilt = Math.max(-1, Math.min(1, val * 3.0));
-  if (Math.abs(rawTilt) > 0.03) hasTilt = true;
+  if (Math.abs(rawTilt) > 0.015) hasTilt = true;
 });
 
 // ─── Game Functions ──────────────────────────────────
@@ -1029,9 +1053,19 @@ function update(dt) {
   let moveInput = 0;
   if (inputLeft) moveInput = -1;
   if (inputRight) moveInput = 1;
-  if (hasTilt && Math.abs(rawTilt) > 0.02) {
+  if (hasTilt && Math.abs(rawTilt) > 0.01) {
     const sign = rawTilt > 0 ? 1 : -1;
-    moveInput = sign * Math.sqrt(Math.abs(rawTilt));
+    const t = Math.min(1, Math.abs(rawTilt));
+    // Smooth response curve:
+    // Phase 1 (0~0.08): quick ramp from 0 to 0.35 for instant initial response
+    // Phase 2 (0.08~1.0): gradual linear ramp from 0.35 to 1.0 for uniform control
+    let mapped;
+    if (t < 0.08) {
+      mapped = (t / 0.08) * 0.35;
+    } else {
+      mapped = 0.35 + ((t - 0.08) / 0.92) * 0.65;
+    }
+    moveInput = sign * mapped;
   }
 
   // Jetpack boost
@@ -1051,6 +1085,15 @@ function update(dt) {
   player.vy += GRAVITY + jetpackBoost;
   player.x += player.vx;
   player.y += player.vy;
+
+  // Clamp player to stay visible during jetpack flight
+  if (player.jetpackActive) {
+    const minY = cameraY + 10;
+    if (player.y < minY) {
+      player.y = minY;
+      player.vy = Math.max(0, player.vy);
+    }
+  }
 
   if (moveInput > 0.1) player.dir = 1;
   if (moveInput < -0.1) player.dir = -1;
@@ -1162,6 +1205,27 @@ function update(dt) {
         player.y = plat.y - player.h;
         player.onPlatform = true;
 
+        // Track green platform bounces for rocket easter egg
+        if (plat.type === PLATFORM_TYPES.NORMAL) {
+          const lastId = greenBounceHistory.length > 0 ? greenBounceHistory[greenBounceHistory.length - 1] : -1;
+          if (plat.id !== lastId) {
+            greenBounceHistory.push(plat.id);
+            if (greenBounceHistory.length >= 10) {
+              // Spawn rocket!
+              rocketEgg = {
+                x: W / 2 - JETPACK_W / 2 + (Math.random() - 0.5) * 100,
+                y: player.y - 80,
+                timer: 5.0,
+                vy: 0,
+                born: true,
+              };
+              greenBounceHistory = [];
+              sfxJetpack();
+              spawnParticles(rocketEgg.x + JETPACK_W / 2, rocketEgg.y, 20, '#facc15');
+            }
+          }
+        }
+
         if (plat.hasPowerUp) {
           plat.hasPowerUp = false;
           player.jetpackActive = true;
@@ -1196,7 +1260,7 @@ function update(dt) {
       break;
     }
 
-    if (!player.invincible &&
+    if (!player.invincible && !player.jetpackActive &&
         player.x + player.w > mon.x + 5 && player.x < mon.x + mon.w - 5 &&
         player.y + player.h > mon.y + 5 && player.y < mon.y + mon.h - 5) {
       gameOver();
@@ -1221,6 +1285,16 @@ function update(dt) {
   if (player.invincible) {
     player.invincibleTimer -= dt;
     if (player.invincibleTimer <= 0) player.invincible = false;
+  }
+
+  // Rocket easter egg countdown
+  if (rocketEgg) {
+    rocketEgg.timer -= dt;
+    rocketEgg.vy += Math.sin(frameCount * 0.08) * 0.3;
+    rocketEgg.y += Math.sin(frameCount * 0.06) * 0.5;
+    if (rocketEgg.timer <= 0) {
+      rocketEgg = null;
+    }
   }
 
   // Screen shake decay
@@ -1302,7 +1376,44 @@ function drawCloud(x, y, warm) {
 function drawPlayer() {
   const sx = player.x;
   const sy = player.y - cameraY;
-  if (player.invincible && Math.floor(frameCount / 5) % 2 === 0) return;
+
+  // Invincibility aura (during jetpack or invincible)
+  if (player.jetpackActive || player.invincible) {
+    const cx = sx + player.w / 2;
+    const cy = sy + player.h / 2;
+    const pulse = Math.sin(frameCount * 0.15) * 0.3 + 0.7;
+    const auraR = Math.max(player.w, player.h) * 0.85 * pulse;
+
+    // Outer glow
+    const grad = ctx.createRadialGradient(cx, cy, auraR * 0.5, cx, cy, auraR * 1.3);
+    grad.addColorStop(0, 'rgba(255,255,100,0)');
+    grad.addColorStop(0.5, 'rgba(255,255,100,0.15)');
+    grad.addColorStop(1, 'rgba(255,255,100,0)');
+    ctx.fillStyle = grad;
+    ctx.beginPath();
+    ctx.arc(cx, cy, auraR * 1.3, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Ring
+    ctx.strokeStyle = `rgba(255,220,80,${0.5 + pulse * 0.3})`;
+    ctx.lineWidth = 2.5;
+    ctx.beginPath();
+    ctx.arc(cx, cy, auraR, 0, Math.PI * 2);
+    ctx.stroke();
+
+    // Sparkle particles on ring
+    for (let i = 0; i < 4; i++) {
+      const angle = frameCount * 0.05 + (i * Math.PI / 2);
+      const px = cx + Math.cos(angle) * auraR;
+      const py = cy + Math.sin(angle) * auraR;
+      ctx.fillStyle = 'rgba(255,255,200,0.8)';
+      ctx.beginPath();
+      ctx.arc(px, py, 2.5, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  }
+
+  if (player.invincible && !player.jetpackActive && Math.floor(frameCount / 5) % 2 === 0) return;
 
   ctx.save();
   ctx.translate(sx + player.w / 2, sy + player.h / 2);
@@ -1382,21 +1493,31 @@ function drawPlatform(plat) {
   const sy = plat.y - cameraY;
   if (sy < -50 || sy > H + 50) return;
 
-  let spriteKey = 'platform_green';
-  if (plat.type === PLATFORM_TYPES.BREAKABLE) spriteKey = 'platform_brown';
-  else if (plat.type === PLATFORM_TYPES.MOVING) spriteKey = 'platform_blue';
-  else if (plat.type === PLATFORM_TYPES.SPRING) spriteKey = 'platform_green';
-
-  const img = sprites[spriteKey];
-  if (img && img.width > 0) {
-    ctx.drawImage(img, sx, sy, plat.w, plat.h);
-  } else {
-    ctx.fillStyle = plat.type === PLATFORM_TYPES.BREAKABLE ? '#a0522d' :
-                    plat.type === PLATFORM_TYPES.MOVING ? '#60a5fa' : '#4ade80';
-    ctx.strokeStyle = '#1a1a1a'; ctx.lineWidth = 2.5;
+  // SPRING type: golden platform to distinguish from normal green
+  if (plat.type === PLATFORM_TYPES.SPRING) {
+    ctx.fillStyle = '#facc15';
+    ctx.strokeStyle = '#ca8a04'; ctx.lineWidth = 2.5;
     ctx.beginPath(); ctx.roundRect(sx, sy, plat.w, plat.h, 4); ctx.fill(); ctx.stroke();
+    // Subtle glow line on top
+    ctx.fillStyle = 'rgba(255,255,200,0.5)';
+    ctx.fillRect(sx + 2, sy + 1, plat.w - 4, 2);
+  } else {
+    let spriteKey = 'platform_green';
+    if (plat.type === PLATFORM_TYPES.BREAKABLE) spriteKey = 'platform_brown';
+    else if (plat.type === PLATFORM_TYPES.MOVING) spriteKey = 'platform_blue';
+
+    const img = sprites[spriteKey];
+    if (img && img.width > 0) {
+      ctx.drawImage(img, sx, sy, plat.w, plat.h);
+    } else {
+      ctx.fillStyle = plat.type === PLATFORM_TYPES.BREAKABLE ? '#a0522d' :
+                      plat.type === PLATFORM_TYPES.MOVING ? '#60a5fa' : '#4ade80';
+      ctx.strokeStyle = '#1a1a1a'; ctx.lineWidth = 2.5;
+      ctx.beginPath(); ctx.roundRect(sx, sy, plat.w, plat.h, 4); ctx.fill(); ctx.stroke();
+    }
   }
 
+  // Spring visual on SPRING platforms
   if (plat.type === PLATFORM_TYPES.SPRING && !plat.springBounced) {
     const springImg = sprites['spring'];
     const sxSp = plat.x + plat.w / 2 - SPRING_W / 2;
@@ -1404,23 +1525,32 @@ function drawPlatform(plat) {
     if (springImg && springImg.width > 0) {
       ctx.drawImage(springImg, sxSp, sySp, SPRING_W, SPRING_H);
     } else {
-      ctx.strokeStyle = '#eab308'; ctx.lineWidth = 2.5;
+      ctx.strokeStyle = '#eab308'; ctx.lineWidth = 3;
       const segH = SPRING_H / 4;
       const scx = plat.x + plat.w / 2;
       ctx.beginPath();
       for (let i = 0; i < 4; i++) {
         const segY = sySp + i * segH;
-        ctx.moveTo(scx - 6, segY); ctx.lineTo(scx + 6, segY + segH / 2);
-        if (i < 3) { ctx.moveTo(scx + 6, segY + segH / 2); ctx.lineTo(scx - 6, segY + segH); }
+        ctx.moveTo(scx - 7, segY); ctx.lineTo(scx + 7, segY + segH / 2);
+        if (i < 3) { ctx.moveTo(scx + 7, segY + segH / 2); ctx.lineTo(scx - 7, segY + segH); }
       }
       ctx.stroke();
     }
   }
 
+  // Power-up (jetpack) with pulsing glow
   if (plat.hasPowerUp) {
     const puX = plat.x + plat.w / 2 - JETPACK_W / 2;
-    const puY = plat.y - JETPACK_H - 2;
+    const puY = plat.y - JETPACK_H - 2 + Math.sin(frameCount * 0.1) * 2;
     const jpImg = sprites['jetpack'];
+    // Pulsing glow
+    const glowR = 18 + Math.sin(frameCount * 0.12) * 3;
+    const glowGrad = ctx.createRadialGradient(puX + JETPACK_W / 2, puY + JETPACK_H / 2, 4, puX + JETPACK_W / 2, puY + JETPACK_H / 2, glowR);
+    glowGrad.addColorStop(0, 'rgba(59,130,246,0.3)');
+    glowGrad.addColorStop(1, 'rgba(59,130,246,0)');
+    ctx.fillStyle = glowGrad;
+    ctx.beginPath(); ctx.arc(puX + JETPACK_W / 2, puY + JETPACK_H / 2, glowR, 0, Math.PI * 2); ctx.fill();
+
     if (jpImg && jpImg.width > 0) {
       ctx.drawImage(jpImg, puX, puY, JETPACK_W, JETPACK_H);
     } else {
@@ -1471,6 +1601,53 @@ function drawParticles() {
     ctx.beginPath(); ctx.arc(p.x, sy, p.size, 0, Math.PI * 2); ctx.fill();
   }
   ctx.globalAlpha = 1;
+}
+
+function drawRocketEgg() {
+  if (!rocketEgg) return;
+  const sx = rocketEgg.x;
+  const sy = rocketEgg.y - cameraY;
+  if (sy < -50 || sy > H + 50) return;
+
+  const cx = sx + JETPACK_W / 2;
+  const cy = sy + JETPACK_H / 2;
+
+  // Pulsing glow
+  const pulse = Math.sin(frameCount * 0.15) * 0.3 + 0.7;
+  const glowR = 30 * pulse;
+  const grad = ctx.createRadialGradient(cx, cy, 5, cx, cy, glowR);
+  grad.addColorStop(0, 'rgba(250,204,21,0.4)');
+  grad.addColorStop(1, 'rgba(250,204,21,0)');
+  ctx.fillStyle = grad;
+  ctx.beginPath(); ctx.arc(cx, cy, glowR, 0, Math.PI * 2); ctx.fill();
+
+  // Rocket body (jetpack sprite)
+  const jpImg = sprites['jetpack'];
+  if (jpImg && jpImg.width > 0) {
+    ctx.drawImage(jpImg, sx, sy, JETPACK_W, JETPACK_H);
+  } else {
+    ctx.fillStyle = '#facc15';
+    ctx.strokeStyle = '#ca8a04'; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.roundRect(sx, sy, JETPACK_W, JETPACK_H, 4); ctx.fill(); ctx.stroke();
+    ctx.fillStyle = '#1a1a1a';
+    ctx.font = 'bold 10px sans-serif'; ctx.textAlign = 'center';
+    ctx.fillText('R', cx, cy + 3);
+  }
+
+  // Countdown number
+  const seconds = Math.ceil(rocketEgg.timer);
+  ctx.fillStyle = seconds <= 2 ? '#ef4444' : '#1a1a1a';
+  ctx.font = 'bold 14px sans-serif'; ctx.textAlign = 'center';
+  ctx.fillText(`${seconds}`, cx, sy - 6);
+
+  // Sparkle particles around rocket
+  for (let i = 0; i < 3; i++) {
+    const angle = frameCount * 0.08 + i * (Math.PI * 2 / 3);
+    const px = cx + Math.cos(angle) * 20;
+    const py = cy + Math.sin(angle) * 20;
+    ctx.fillStyle = 'rgba(255,255,200,0.8)';
+    ctx.beginPath(); ctx.arc(px, py, 2, 0, Math.PI * 2); ctx.fill();
+  }
 }
 
 function drawPauseButtonIcon() {
@@ -1825,6 +2002,7 @@ function gameLoop() {
     drawBullets();
     for (const plat of platforms) drawPlatform(plat);
     drawMonsters();
+    drawRocketEgg();
     drawPlayer();
     drawParticles();
     restoreShake();
@@ -1834,6 +2012,7 @@ function gameLoop() {
     drawBullets();
     for (const plat of platforms) drawPlatform(plat);
     drawMonsters();
+    drawRocketEgg();
     drawPlayer();
     drawParticles();
     restoreShake();
@@ -1867,6 +2046,7 @@ function gameLoop() {
     drawBullets();
     for (const plat of platforms) drawPlatform(plat);
     drawMonsters();
+    drawRocketEgg();
     drawPlayer();
     drawParticles();
     restoreShake();
